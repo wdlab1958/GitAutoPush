@@ -50,6 +50,7 @@ class ConfigManager:
                 "auto_push_after_commit": True,
                 "git_user_name": "",
                 "git_user_email": "",
+                "github_pat": "",
                 "theme": "dark",
                 "language": "ko",
                 "log_retention_days": 365

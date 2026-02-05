@@ -63,6 +63,7 @@ class WorkerThread(QThread):
         project: ProjectConfig = self.kwargs["project"]
         commit_msg: str = self.kwargs.get("commit_msg", "")
         auto_push: bool = self.kwargs.get("auto_push", True)
+        pat: str = self.kwargs.get("pat", "")
 
         # Step 1: Init / Check repo
         self.log_signal.emit("🔍 Checking repository...")
@@ -162,7 +163,7 @@ class WorkerThread(QThread):
         if auto_push:
             self.log_signal.emit("🚀 Pushing to remote...")
             self.progress_signal.emit(85)
-            ok, msg = git.push()
+            ok, msg = git.push(pat=pat)
             if ok:
                 log_mgr.update_push_status(log_id)
                 self.log_signal.emit(f"  ✅ {msg}")
@@ -623,6 +624,14 @@ class MainWindow(QMainWindow):
         self.git_email_input.setPlaceholderText("you@email.com")
         g_layout.addRow("Email:", self.git_email_input)
 
+        self.git_pat_input = QLineEdit()
+        self.git_pat_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.git_pat_input.setPlaceholderText("ghp_xxxxxxxxxxxx")
+        existing_pat = self.config_mgr.get_value("github_pat", "")
+        if existing_pat:
+            self.git_pat_input.setText("........")
+        g_layout.addRow("GitHub PAT:", self.git_pat_input)
+
         layout.addWidget(git_group)
 
         # Save Button
@@ -803,7 +812,8 @@ class MainWindow(QMainWindow):
             ver_mgr=self.ver_mgr,
             project=project,
             commit_msg=self.commit_msg_input.text().strip(),
-            auto_push=self.auto_push_check.isChecked()
+            auto_push=self.auto_push_check.isChecked(),
+            pat=self.config_mgr.get_value("github_pat", "")
         )
 
     def _check_ollama_status(self):
@@ -885,12 +895,23 @@ class MainWindow(QMainWindow):
 
     def _save_settings(self):
         """설정 저장"""
-        self.config_mgr.update_config({
+        updates = {
             "ollama_url": self.ollama_url_input.text().strip(),
             "ollama_model": self.ollama_model_combo.currentText().strip(),
             "git_user_name": self.git_name_input.text().strip(),
             "git_user_email": self.git_email_input.text().strip(),
-        })
+        }
+
+        # PAT 저장 로직
+        pat_value = self.git_pat_input.text()
+        if pat_value == "........":
+            pass  # 변경 없음 - 기존 값 유지
+        elif pat_value.strip() == "":
+            updates["github_pat"] = ""  # PAT 삭제
+        else:
+            updates["github_pat"] = pat_value.strip()  # 새 PAT 저장
+
+        self.config_mgr.update_config(updates)
 
         # Ollama 클라이언트 업데이트
         self.ollama.config.base_url = self.ollama_url_input.text().strip()

@@ -160,9 +160,20 @@ class GitManager:
         return True, out, commit_hash
 
     def push(self, remote: str = "origin", branch: Optional[str] = None,
-             set_upstream: bool = True) -> Tuple[bool, str]:
-        """Push 수행"""
+             set_upstream: bool = True, pat: str = "") -> Tuple[bool, str]:
+        """Push 수행 (PAT가 있으면 HTTPS URL에 인증 토큰 삽입)"""
         branch = branch or self.get_current_branch()
+
+        # PAT가 있고 HTTPS URL인 경우 임시 remote URL 설정
+        pat_remote_set = False
+        if pat and self.remote_url:
+            url = self.remote_url
+            if url.startswith("https://"):
+                # https://github.com/... → https://{pat}@github.com/...
+                auth_url = url.replace("https://", f"https://{pat}@", 1)
+                self._run_git(["remote", "set-url", remote, auth_url])
+                pat_remote_set = True
+
         args = ["push"]
 
         if set_upstream:
@@ -171,6 +182,11 @@ class GitManager:
             args.extend([remote, branch])
 
         ok, out, err = self._run_git(args)
+
+        # PAT로 임시 변경한 remote URL을 원래대로 복원
+        if pat_remote_set:
+            self._run_git(["remote", "set-url", remote, self.remote_url])
+
         if ok:
             return True, f"Pushed to {remote}/{branch}"
 
