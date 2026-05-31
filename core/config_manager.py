@@ -18,7 +18,7 @@ class ProjectConfig:
     branch: str = "main"
     location: str = "home"          # 'home' or 'office'
     auto_push: bool = True
-    ollama_model: str = "llama3.1:8b"
+    ollama_model: str = "llama3.2:3b"
     git_user_name: str = ""
     git_user_email: str = ""
     custom_gitignore: List[str] = field(default_factory=list)
@@ -45,7 +45,7 @@ class ConfigManager:
             default_config = {
                 "app_version": "1.0.0",
                 "ollama_url": "http://localhost:11434",
-                "ollama_model": "llama3.1:8b",
+                "ollama_model": "llama3.2:3b",
                 "default_location": "home",
                 "auto_push_after_commit": True,
                 "git_user_name": "",

@@ -291,7 +291,7 @@ class MainWindow(QMainWindow):
         self.ver_mgr = VersionManager()
         self.ollama = OllamaClient(OllamaConfig(
             base_url=self.config_mgr.get_value("ollama_url", "http://localhost:11434"),
-            model=self.config_mgr.get_value("ollama_model", "llama3.1:8b")
+            model=self.config_mgr.get_value("ollama_model", "llama3.2:3b")
         ))
         self.git = GitManager()
         self.worker: Optional[WorkerThread] = None
